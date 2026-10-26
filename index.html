@@ -221,6 +221,11 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
     </div>
 
     <div class="card">
+      <div class="card-h"><div class="card-t">政治进度</div><div class="card-sub">做完哪些点哪些</div></div>
+      <div class="chips" id="chipPol"></div>
+    </div>
+
+    <div class="card">
       <button class="btn primary full" id="btnDone">今天到此为止</button>
       <div class="small mt" id="doneHint">点一下会把今天归档（可再点取消）</div>
     </div>
@@ -334,7 +339,8 @@ var KEY='kaoyan_sop_v2', OLDKEY='kaoyan_sop_v1', EXAM='2026-12-19', TERM_END='20
 var FLOOR=['word','bm','other'];
 var FULL=['word','bm','other','prob','math','eng','pol'];
 var PROB_CHIPS=['随机事件','一维','二维','数字特征','统计','已完成'];
-var SIG_CHIPS=['第6章','第7章','第8章','第9章','真题'];
+var SIG_CHIPS=['6.11','6.12','第7章','8.1','8.2','8.3','8.4','8.5','8.6','8.7','8.8','8.9','8.10','9.1','9.2','9.3','9.4','9.5','9.6','9.7','9.8','9.9','真题'];
+var POL_CHIPS=['强化课','马原选择','新思想选择','史纲选择','毛中特选择','思修选择','时政','选择题一刷','肖8','大题背诵'];
 var ENG_CHIPS=['阅读1-2','阅读3-4','新题型','完型','翻译','作文','整卷'];
 var GOAL_CHIPS=['概率收口','三重线面','保命班追平','政治一刷','信号第9章','英语作文','不崩'];
 var GATES=[
@@ -380,12 +386,22 @@ function migrate(old){
   if(old.settings) s.settings=old.settings;
   return s;
 }
+function fixup(s){
+  var SM={'第6章':'6.12','第8章':'8.10','第9章':'9.9'};
+  Object.keys(s.days||{}).forEach(function(k){
+    var r=s.days[k]; if(!r) return;
+    if(r.sig && SM[r.sig]) r.sig=SM[r.sig];
+    if(!Array.isArray(r.polProg)) r.polProg=[];
+    if(!Array.isArray(r.eng)) r.eng=[];
+  });
+  return s;
+}
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
-    if(raw) return Object.assign(defaults(),JSON.parse(raw));
+    if(raw) return fixup(Object.assign(defaults(),JSON.parse(raw)));
     var old=localStorage.getItem(OLDKEY);
-    if(old){ var m=migrate(JSON.parse(old)); localStorage.setItem(KEY,JSON.stringify(m)); return m; }
+    if(old){ var m=fixup(migrate(JSON.parse(old))); localStorage.setItem(KEY,JSON.stringify(m)); return m; }
     return seed(defaults());
   }catch(e){ return defaults(); }
 }
@@ -402,11 +418,12 @@ function save(){ try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast(
 function rec(key){
   key=key||todayKey();
   if(!S.days[key]) S.days[key]={items:{word:false,bm:false,other:false,prob:false,math:false,eng:false,pol:false},
-    bmDay:null,prob:'',sig:'',eng:[],note:''};
+    bmDay:null,prob:'',sig:'',eng:[],polProg:[],note:''};
   var r=S.days[key];
   if(!r.items) r.items={};
   FLOOR.concat(FULL).forEach(function(k){ if(r.items[k]===undefined) r.items[k]=false; });
   if(!Array.isArray(r.eng)) r.eng=[];
+  if(!Array.isArray(r.polProg)) r.polProg=[];
   return r;
 }
 function isPass(r){return !!(r&&r.items&&r.items.word&&r.items.bm&&r.items.other)}
@@ -485,6 +502,11 @@ function renderToday(){
     if(i>=0) rr.eng.splice(i,1); else rr.eng.push(v);
     save(); renderToday();
   },r.eng);
+  buildChips('chipPol',POL_CHIPS,null,function(v){
+    var rr=rec(); var i=rr.polProg.indexOf(v);
+    if(i>=0) rr.polProg.splice(i,1); else rr.polProg.push(v);
+    save(); renderToday();
+  },r.polProg);
 
   /* 收工状态 */
   var done=!!r.doneAt;
@@ -720,7 +742,7 @@ function renderAll(){ renderHead(); renderToday(); applyTheme(); }
 S=load();
 bind();
 renderAll();
-if(!localStorage.getItem(KEY)) save();
+save();  /* 顺手把迁移/规范化的结果落盘，保证导出的备份也是新格式 */
 var _h=(location.hash||'').replace('#','');
 if(_h && TABS.indexOf(_h)>=0 && _h!=='today') go(_h);
 })();
