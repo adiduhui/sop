@@ -225,7 +225,12 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
     </div>
 
     <div class="card">
-      <div class="card-h"><div class="card-t">信号进度</div><div class="card-sub">点到哪一章</div></div>
+      <div class="card-h"><div class="card-t">数学补漏进度</div><div class="card-sub">学完哪块点哪块</div></div>
+      <div class="chips" id="chipMath"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-t">信号进度</div><div class="card-sub">点到哪一节</div></div>
       <div class="chips" id="chipSig"></div>
     </div>
 
@@ -270,6 +275,26 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
         <div class="stat"><b id="stStreak">0</b><span>连续及格</span></div>
         <div class="stat"><b id="stTotal">0</b><span>累计及格日</span></div>
       </div>
+      <div class="small mt" id="backupHint">—</div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-t">记一次成绩</div><div class="card-sub" id="scoreSubjName">信号</div></div>
+      <div class="small">科目</div>
+      <div class="chips" id="chipSubj" style="margin-top:5px"></div>
+      <div class="small mt">哪一套</div>
+      <div class="chips" id="chipLabel" style="margin-top:5px"></div>
+      <div class="grid2 mt">
+        <div><label class="f">得分</label><input type="number" id="scoreVal" inputmode="numeric" placeholder="0"></div>
+        <div><label class="f">满分</label><input type="number" id="scoreFull" inputmode="numeric"></div>
+      </div>
+      <div class="btn-row mt"><button class="btn primary" id="btnScoreAdd">记下这次</button></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-t">成绩趋势</div><div class="card-sub" id="scoreTrendName">信号</div></div>
+      <div id="chartScore"></div>
+      <div class="small mt" id="scoreList">—</div>
     </div>
 
     <div class="card">
@@ -356,6 +381,14 @@ var PROB_CHIPS=['随机事件','一维','二维','数字特征','统计','已完
 var SIG_CHIPS=['6.11','6.12','第7章','8.1','8.2','8.3','8.4','8.5','8.6','8.7','8.8','8.9','8.10','9.1','9.2','9.3','9.4','9.5','9.6','9.7','9.8','9.9','真题'];
 var POL_CHIPS=['强化课','马原选择','新思想选择','史纲选择','毛中特选择','思修选择','时政','选择题一刷','肖8','大题背诵'];
 var WORD_CHIPS=['20','30','50','80','100','150'];
+var MATH_CHIPS=['向量解析几何','三重积分','曲线积分','曲面积分','级数','线代','保命班完结'];
+var SUBJ=[
+  {k:'sig', n:'信号', full:150, labels:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026']},
+  {k:'math',n:'数学', full:150, labels:['套1','套2','套3','套4','套5','套6','套7','套8','套9','套10','套11','套12']},
+  {k:'eng', n:'英语', full:60,  labels:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025']},
+  {k:'pol', n:'政治', full:50,  labels:['肖1','肖2','肖3','肖4','肖5','肖6','肖7','肖8']}
+];
+var curSubj='sig', curLabel='';
 var ENG_CHIPS=['阅读1-2','阅读3-4','新题型','完型','翻译','作文','整卷'];
 var GOAL_CHIPS=['概率收口','三重线面','保命班追平','政治一刷','信号第9章','英语作文','不崩'];
 var GATES=[
@@ -381,7 +414,14 @@ var S;
 function defaults(){
   return {v:2,exam:EXAM,
     base:{date:'2026-10-26',courseDay:53},
-    days:{},weeks:{},settings:{theme:'auto'}};
+    days:{},weeks:{},settings:{theme:'auto'},
+    scores:[
+      {subj:'eng',label:'2010',score:36,full:60,d:'2026-10-20'},
+      {subj:'eng',label:'2011',score:36,full:60,d:'2026-10-20'},
+      {subj:'eng',label:'2012',score:45,full:60,d:'2026-10-21'},
+      {subj:'eng',label:'2013',score:41,full:60,d:'2026-10-22'},
+      {subj:'eng',label:'2014',score:47,full:60,d:'2026-10-25'}
+    ]};
 }
 function migrate(old){
   var s=defaults();
@@ -439,6 +479,7 @@ function rec(key){
   FLOOR.concat(FULL).forEach(function(k){ if(r.items[k]===undefined) r.items[k]=false; });
   if(!Array.isArray(r.eng)) r.eng=[];
   if(!Array.isArray(r.polProg)) r.polProg=[];
+  if(!Array.isArray(r.mathProg)) r.mathProg=[];
   return r;
 }
 function isPass(r){return !!(r&&r.items&&r.items.word&&r.items.bm&&r.items.other)}
@@ -537,6 +578,11 @@ function renderToday(){
     if(i>=0) rr.polProg.splice(i,1); else rr.polProg.push(v);
     save(); renderToday();
   },r.polProg);
+  buildChips('chipMath',MATH_CHIPS,null,function(v){
+    var rr=rec(); var i=rr.mathProg.indexOf(v);
+    if(i>=0) rr.mathProg.splice(i,1); else rr.mathProg.push(v);
+    save(); renderToday();
+  },r.mathProg);
 
   /* 收工状态 */
   var done=!!r.doneAt;
@@ -651,6 +697,47 @@ function renderReview(){
     save(); renderReview(); toast('已记下周目标：'+v);
   });
   $('wkSaved').textContent=wkRec?('已保存：'+wkRec.goal+'（'+wkRec.at+'）'):'—';
+
+  var le=(S.settings||{}).lastExport;
+  $('backupHint').textContent = le ? ('上次导出备份：'+le) : '⚠ 还没导出过备份（计划 → 参考 → 备份与外观）';
+  renderScoreForm();
+}
+
+/* ---------- 成绩记录 ---------- */
+function scoreCfg(k){
+  for(var i=0;i<SUBJ.length;i++) if(SUBJ[i].k===k) return SUBJ[i];
+  return SUBJ[0];
+}
+function renderScoreForm(){
+  var cfg=scoreCfg(curSubj);
+  $('scoreSubjName').textContent=cfg.n;
+  $('scoreTrendName').textContent=cfg.n;
+  buildChips('chipSubj',SUBJ.map(function(s){return s.n}),cfg.n,function(v){
+    var c=SUBJ.filter(function(s){return s.n===v})[0]||SUBJ[0];
+    curSubj=c.k; curLabel=''; $('scoreVal').value='';
+    renderScoreForm();
+  });
+  buildChips('chipLabel',cfg.labels,curLabel,function(v){ curLabel=v; renderScoreForm(); });
+  $('scoreFull').value=cfg.full;
+  renderScoreChart();
+}
+function renderScoreChart(){
+  var arr=(S.scores||[]).filter(function(x){return x.subj===curSubj});
+  var host=$('chartScore'), list=$('scoreList');
+  if(!arr.length){ host.innerHTML='<div class="small">还没有成绩，先在上面记一次</div>'; list.textContent='—'; return; }
+  var w=640,h=150,padL=8,padR=8,padT=16,padB=22;
+  var fm=Math.max.apply(null,arr.map(function(x){return (+x.full)||100}).concat([1]));
+  var bw=(w-padL-padR)/arr.length, bars='';
+  arr.forEach(function(x,i){
+    var bh=Math.max(2,(h-padT-padB)*Math.min(1,(+x.score)/fm));
+    var y=h-padB-bh;
+    bars+='<rect x="'+(padL+i*bw+bw*0.18)+'" y="'+y+'" width="'+(bw*0.64)+'" height="'+bh+'" rx="4" fill="#2a4f7d"/>';
+    bars+='<text x="'+(padL+i*bw+bw/2)+'" y="'+(y-5)+'" font-size="11" fill="currentColor" text-anchor="middle">'+x.score+'</text>';
+    bars+='<text x="'+(padL+i*bw+bw/2)+'" y="'+(h-6)+'" font-size="10" fill="currentColor" text-anchor="middle" opacity=".65">'+x.label+'</text>';
+  });
+  host.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" style="display:block"><g color="var(--text)">'+bars+'</g></svg>';
+  var last=arr[arr.length-1];
+  list.textContent='最近：'+last.label+' '+last.score+'/'+last.full+' ｜ 共 '+arr.length+' 次';
 }
 
 /* ---------- 计划 ---------- */
@@ -743,7 +830,19 @@ function bind(){
     b.addEventListener('click',function(){ go(b.getAttribute('data-tab')); });
   });
 
+  $('btnScoreAdd').addEventListener('click',function(){
+    var sc=$('scoreVal').value, fu=$('scoreFull').value;
+    if(!curLabel){ toast('先选"哪一套"'); return; }
+    if(sc===''){ toast('填个分数'); return; }
+    S.scores=S.scores||[];
+    S.scores=S.scores.filter(function(x){ return !(x.subj===curSubj && x.label===curLabel); });
+    S.scores.push({subj:curSubj,label:curLabel,score:+sc,full:+fu||100,d:todayKey()});
+    save(); $('scoreVal').value=''; renderScoreChart();
+    toast('已记下 '+curLabel+'：'+sc+' 分');
+  });
+
   $('btnExport').addEventListener('click',function(){
+    S.settings=S.settings||{}; S.settings.lastExport=todayKey(); save();
     var blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
@@ -774,6 +873,16 @@ function bind(){
 }
 
 function renderAll(){ renderHead(); renderToday(); applyTheme(); }
+
+/* ---------- 多标签页同步（避免两个标签互相覆盖） ---------- */
+window.addEventListener('storage',function(e){
+  if(e.key!==KEY) return;
+  S=load(); renderAll();
+  var h=(location.hash||'').replace('#','');
+  if(h==='review'){ chartBm(); renderReview(); }
+  if(h==='plan') renderPlan();
+  toast('已同步另一标签页的改动');
+});
 
 /* ---------- 启动 ---------- */
 S=load();
