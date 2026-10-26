@@ -179,12 +179,18 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
   <section id="view-today">
     <div class="card">
       <div class="card-h">
-        <div class="card-t">今天 3 件</div>
+        <div class="card-t">今天要做</div>
         <div class="card-sub" id="passState">未及格</div>
       </div>
-      <div class="item" data-k="word"><div class="box">✓</div><div><div class="txt">单词 15 分钟</div><div class="sub">不求记住，只求不断</div></div></div>
-      <div class="item" data-k="bm"><div class="box">✓</div><div><div class="txt">保命班当日任务</div><div class="sub">讲解在课堂，做题在晚上</div></div></div>
-      <div class="item" data-k="other"><div class="box">✓</div><div><div class="txt">信号 1 小节 / 概率 5 题</div><div class="sub">二选一</div></div></div>
+      <div class="small" style="margin:-4px 0 8px"><b>底线 3 件</b>（崩了也做这 3 件 → 及格）</div>
+      <div class="item" data-k="word"><div class="box">✓</div><div><div class="txt">① 单词 15 分钟</div><div class="sub">不求记住，只求不断</div></div></div>
+      <div class="item" data-k="bm"><div class="box">✓</div><div><div class="txt">② 保命班当日任务</div><div class="sub">讲解在课堂，做题在晚上</div></div></div>
+      <div class="item" data-k="other"><div class="box">✓</div><div><div class="txt">③ 信号 1 小节</div><div class="sub">第9章 / 分类真题 1 道</div></div></div>
+      <div class="small" style="margin:12px 0 8px"><b>拉满再加 4 件</b>（状态好就全上）</div>
+      <div class="item" data-k="prob"><div class="box">✓</div><div><div class="txt">④ 概率 5 题</div><div class="sub">照抄例题 1 遍也算数</div></div></div>
+      <div class="item" data-k="math"><div class="box">✓</div><div><div class="txt">⑤ 数学补漏例题</div><div class="sub">三重/线面/880 选做</div></div></div>
+      <div class="item" data-k="eng"><div class="box">✓</div><div><div class="txt">⑥ 英语 1 篇</div><div class="sub">阅读 + 逐句复盘</div></div></div>
+      <div class="item" data-k="pol"><div class="box">✓</div><div><div class="txt">⑦ 政治 20–30 题</div><div class="sub">碎片刷，错题标红</div></div></div>
     </div>
 
     <div class="card">
@@ -456,14 +462,17 @@ function renderHead(){
 }
 
 /* ---------- 今日 ---------- */
+var FLOOR=['word','bm','other'];
+var FULL=['word','bm','other','prob','math','eng','pol'];
 function renderToday(){
   var r=rec();
   document.querySelectorAll('#view-today .item').forEach(function(el){
     var k=el.getAttribute('data-k');
     el.classList.toggle('on', !!r.items[k]);
   });
-  var n=(r.items.word?1:0)+(r.items.bm?1:0)+(r.items.other?1:0);
-  $('passState').textContent = n===3?'✓ 今日及格':(n+'/3 件');
+  var nb=0; FLOOR.forEach(function(k){ if(r.items[k]) nb++; });
+  var na=0; FULL.forEach(function(k){ if(r.items[k]) na++; });
+  $('passState').textContent = (nb>=3?'✓ 及格 · ':'') + '底线 '+nb+'/3 · 全量 '+na+'/'+FULL.length;
 
   ['bmDay','courseDay','classH','eng','pol'].forEach(function(id){
     var v=r[id];
