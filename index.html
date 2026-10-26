@@ -309,6 +309,8 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
         <div class="chips mt" id="chipGoal"></div>
       </div>
       <div class="small mt" id="wkSaved">—</div>
+      <div class="small mt" style="font-weight:700;color:var(--navy)">历史周报</div>
+      <div id="weekHistory"></div>
     </div>
   </section>
 
@@ -451,6 +453,85 @@ function fixup(s){
   });
   return s;
 }
+/* ---------- 导入：字段级校验与清洗 ---------- */
+function isDateKey(s){
+  if(typeof s!=='string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  var d=parseDk(s);
+  if(isNaN(d.getTime())) return false;
+  /* 往返校验：2026-13-45 会被 Date 静默滚成 2027-02-14，必须挡住 */
+  return dk(d)===s;
+}
+function numOr(v,def){
+  if(v==null||v==='') return def;
+  var n=+v; return isFinite(n)?n:def;
+}
+function strOf(v){ return (v==null?'':String(v)); }
+function arrStr(v){
+  return Array.isArray(v)? v.filter(function(x){return typeof x==='string'&&x.length>0}) : [];
+}
+
+function sanitize(raw){
+  var out=defaults();
+  /* 导入＝还原，不是合并：清掉种子，只保留文件里真实存在且合法的记录 */
+  out.days={}; out.scores=[]; out.weeks={};
+  var cnt={days:0,scores:0,weeks:0,dropped:0};
+  if(!raw||typeof raw!=='object'||Array.isArray(raw)){
+    return {data:out,cnt:cnt,fatal:'根节点不是对象'};
+  }
+  if(isDateKey(raw.exam)) out.exam=raw.exam;
+  if(raw.base&&typeof raw.base==='object'&&isDateKey(raw.base.date)){
+    out.base={date:raw.base.date,courseDay:numOr(raw.base.courseDay,53)};
+  }
+  if(raw.settings&&typeof raw.settings==='object'){
+    var th=raw.settings.theme;
+    if(['auto','light','dark'].indexOf(th)>=0) out.settings.theme=th;
+    if(isDateKey(raw.settings.lastExport)) out.settings.lastExport=raw.settings.lastExport;
+  }
+
+  if(raw.days&&typeof raw.days==='object'&&!Array.isArray(raw.days)){
+    Object.keys(raw.days).forEach(function(k){
+      if(!isDateKey(k)){ cnt.dropped++; return; }
+      var r=raw.days[k];
+      if(!r||typeof r!=='object'){ cnt.dropped++; return; }
+      var it=(r.items&&typeof r.items==='object')?r.items:{};
+      var rec={items:{},bmDay:null,prob:strOf(r.prob),sig:strOf(r.sig),
+        eng:arrStr(r.eng),polProg:arrStr(r.polProg),mathProg:arrStr(r.mathProg),
+        wordCount:numOr(r.wordCount,null),courseDay:numOr(r.courseDay,null),
+        note:strOf(r.note)};
+      FLOOR.concat(FULL).forEach(function(x){ rec.items[x]=!!it[x]; });
+      var bm=numOr(r.bmDay,null); if(bm!==null&&bm>=0) rec.bmDay=bm;
+      if(r.doneAt) rec.doneAt=strOf(r.doneAt);
+      out.days[k]=rec; cnt.days++;
+    });
+  }
+
+  if(Array.isArray(raw.scores)){
+    var keys=SUBJ.map(function(s){return s.k});
+    raw.scores.forEach(function(x){
+      if(!x||typeof x!=='object'){ cnt.dropped++; return; }
+      if(keys.indexOf(x.subj)<0){ cnt.dropped++; return; }
+      var sc=numOr(x.score,null);
+      if(sc===null||sc<0){ cnt.dropped++; return; }
+      var fu=numOr(x.full,100); if(fu<=0) fu=100;
+      out.scores.push({subj:x.subj,label:strOf(x.label)||'—',
+        score:sc,full:fu,d:isDateKey(x.d)?x.d:todayKey()});
+      cnt.scores++;
+    });
+  }
+
+  if(raw.weeks&&typeof raw.weeks==='object'&&!Array.isArray(raw.weeks)){
+    Object.keys(raw.weeks).forEach(function(k){
+      if(!isDateKey(k)){ cnt.dropped++; return; }
+      var v=raw.weeks[k];
+      if(!v||typeof v!=='object'){ cnt.dropped++; return; }
+      out.weeks[k]={goal:strOf(v.goal),at:strOf(v.at),
+        pass:numOr(v.pass,null),full:numOr(v.full,null),gate:strOf(v.gate)};
+      cnt.weeks++;
+    });
+  }
+  return {data:out,cnt:cnt,fatal:null};
+}
+
 function load(){
   try{
     var raw=localStorage.getItem(KEY);
@@ -693,14 +774,30 @@ function renderReview(){
   buildChips('chipGoal',GOAL_CHIPS,wkRec?wkRec.goal:'',function(v){
     S.weeks=S.weeks||{};
     var k=dk(addDays(new Date(),-((new Date().getDay()+6)%7)));
-    S.weeks[k]={goal:v,at:new Date().toLocaleString('zh-CN')};
+    S.weeks[k]={goal:v,at:new Date().toLocaleString('zh-CN'),
+      pass:pass,full:full,gate:(pass>=5?'绿':'黄')};
     save(); renderReview(); toast('已记下周目标：'+v);
   });
   $('wkSaved').textContent=wkRec?('已保存：'+wkRec.goal+'（'+wkRec.at+'）'):'—';
+  renderWeekHistory();
 
   var le=(S.settings||{}).lastExport;
   $('backupHint').textContent = le ? ('上次导出备份：'+le) : '⚠ 还没导出过备份（计划 → 参考 → 备份与外观）';
   renderScoreForm();
+}
+
+function renderWeekHistory(){
+  var host=$('weekHistory'); if(!host) return;
+  var ks=Object.keys(S.weeks||{}).sort().reverse().slice(0,10);
+  if(!ks.length){ host.innerHTML='<div class="small">还没有历史周报（点一个"下周唯一目标"就会存一份）</div>'; return; }
+  host.innerHTML=ks.map(function(k){
+    var v=S.weeks[k]||{};
+    var cls=(v.pass!=null&&v.pass>=5)?'green':'red';
+    return '<div class="gate"><span class="dot '+cls+'"></span><div>'+
+      '<b>'+k+'</b> <span class="small">及格 '+(v.pass==null?'–':v.pass)+' 天'+
+      (v.full!=null?(' · 拉满 '+v.full+' 件'):'')+'</span>'+
+      '<div class="small">目标：'+(v.goal||'—')+'</div></div></div>';
+  }).join('');
 }
 
 /* ---------- 成绩记录 ---------- */
@@ -854,9 +951,18 @@ function bind(){
     var f=e.target.files[0]; if(!f) return;
     var rd=new FileReader();
     rd.onload=function(){
-      try{ var d=JSON.parse(rd.result); if(!d||!d.days) throw new Error('格式不对');
-        S=Object.assign(defaults(),d); save(); renderAll(); toast('已导入');
-      }catch(err){ toast('导入失败：'+err.message); }
+      var parsed;
+      try{ parsed=JSON.parse(rd.result); }
+      catch(err){ toast('不是合法的 JSON 文件'); e.target.value=''; return; }
+      var res=sanitize(parsed);
+      if(res.fatal){ toast('导入失败：'+res.fatal); e.target.value=''; return; }
+      if(res.cnt.days===0 && res.cnt.scores===0 && res.cnt.weeks===0){
+        toast('文件里没有可用记录，已取消导入'); e.target.value=''; return;
+      }
+      S=res.data; save(); refreshCurrent();
+      toast('导入成功：'+res.cnt.days+' 天 · '+res.cnt.scores+' 条成绩 · '+res.cnt.weeks+' 份周报'
+        + (res.cnt.dropped? (' · 跳过 '+res.cnt.dropped+' 条无效') : ''));
+      e.target.value='';
     };
     rd.readAsText(f);
   });
@@ -873,14 +979,17 @@ function bind(){
 }
 
 function renderAll(){ renderHead(); renderToday(); applyTheme(); }
+function refreshCurrent(){
+  renderAll();
+  var h=(location.hash||'').replace('#','');
+  if(h==='review'){ chartBm(); renderReview(); }
+  if(h==='plan') renderPlan();
+}
 
 /* ---------- 多标签页同步（避免两个标签互相覆盖） ---------- */
 window.addEventListener('storage',function(e){
   if(e.key!==KEY) return;
-  S=load(); renderAll();
-  var h=(location.hash||'').replace('#','');
-  if(h==='review'){ chartBm(); renderReview(); }
-  if(h==='plan') renderPlan();
+  S=load(); refreshCurrent();
   toast('已同步另一标签页的改动');
 });
 
