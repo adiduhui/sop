@@ -67,6 +67,12 @@ html[data-theme="dark"] .card-t{color:#a9c6e8}
 .stepper button:active{transform:scale(.95)}
 .stepper .val{font-size:36px;font-weight:800;font-variant-numeric:tabular-nums;min-width:84px;text-align:center;line-height:1.1}
 .stepper .val small{display:block;font-size:11px;font-weight:500;color:var(--muted);line-height:1.3}
+.courserow{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;
+  color:var(--muted);margin:2px 0 4px}
+.courserow b{font-size:19px;color:var(--text);font-variant-numeric:tabular-nums;min-width:30px;text-align:center}
+.mini{width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--bg);
+  color:var(--text);font-size:16px;line-height:1;cursor:pointer;font-family:inherit;padding:0}
+.mini:active{transform:scale(.94)}
 
 /* chips */
 .chips{display:flex;flex-wrap:wrap;gap:7px}
@@ -201,6 +207,13 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
         <button id="bmMinus" aria-label="减一天">−</button>
         <div class="val"><span id="bmVal">–</span><small id="bmSub">Day</small></div>
         <button id="bmPlus" aria-label="加一天">＋</button>
+      </div>
+      <div class="courserow">
+        <span>课程 Day</span>
+        <button class="mini" id="cdMinus" aria-label="课程减一">−</button>
+        <b id="cdVal">–</b>
+        <button class="mini" id="cdPlus" aria-label="课程加一">＋</button>
+        <span class="small" id="cdAuto">自动</span>
       </div>
       <div class="lag" id="lagBox">—</div>
     </div>
@@ -430,6 +443,8 @@ function isPass(r){return !!(r&&r.items&&r.items.word&&r.items.bm&&r.items.other
 
 /* 课程 Day 自动推进 */
 function courseDayOn(key){
+  var r=S.days[key];
+  if(r && r.courseDay) return +r.courseDay;
   var b=S.base||{date:'2026-10-26',courseDay:53};
   return (+b.courseDay||0)+dayDiff(parseDk(b.date),parseDk(key));
 }
@@ -483,6 +498,8 @@ function renderToday(){
   $('bmVal').textContent=(bm||'–');
   $('bmSub').textContent=has?('Day · 今日已记'):('Day · 昨天');
   $('bmHint').textContent=has?'已记录':'点 ＋ 记一天';
+  $('cdVal').textContent=course;
+  $('cdAuto').textContent=(S.days[t]&&S.days[t].courseDay)?'已校准':'自动·每天+1';
   var lag=course-bm;
   var box=$('lagBox');
   if(!bm){ box.className='lag'; box.textContent='先点 ＋ 记下保命班 Day'; }
@@ -688,6 +705,13 @@ function bind(){
   $('bmMinus').addEventListener('click',function(){
     var rr=rec(); var cur=rr.bmDay?+rr.bmDay:lastBmBefore(todayKey());
     rr.bmDay=Math.max(0,cur-1); save(); renderToday();
+  });
+
+  $('cdPlus').addEventListener('click',function(){
+    var rr=rec(); rr.courseDay=courseDayOn(todayKey())+1; save(); renderToday();
+  });
+  $('cdMinus').addEventListener('click',function(){
+    var rr=rec(); rr.courseDay=Math.max(0,courseDayOn(todayKey())-1); save(); renderToday();
   });
 
   $('btnDone').addEventListener('click',function(){
