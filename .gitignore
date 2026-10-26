@@ -1,0 +1,4 @@
+# 只把要发布的东西交给 git，截图和临时文件不入库
+shot_*.png
+_*.html
+_token.txt

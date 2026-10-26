@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SOP作战台">
+<meta name="theme-color" content="#1f3a5f">
+<title>考研 S.O.P. 作战台</title>
+<style>
+:root{
+  --navy:#1f3a5f; --navy2:#2a4f7d; --accent:#c05621; --accent-soft:#fdf3ec;
+  --green:#2f7a52; --green-soft:#edf6f1;
+  --bg:#eef2f7; --card:#ffffff; --border:#dbe4ee; --text:#22303f; --muted:#6b7c8f;
+  --radius:14px; --radius-s:10px;
+  --shadow:0 2px 10px rgba(31,58,95,.07);
+  --tap:44px;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0f1620; --card:#18222e; --border:#27333f; --text:#e6edf5; --muted:#93a3b5;
+    --accent-soft:#2a1d15; --green-soft:#132018; --shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+}
+html[data-theme="light"]{
+  --bg:#eef2f7; --card:#ffffff; --border:#dbe4ee; --text:#22303f; --muted:#6b7c8f;
+  --accent-soft:#fdf3ec; --green-soft:#edf6f1; --shadow:0 2px 10px rgba(31,58,95,.07);
+}
+html[data-theme="dark"]{
+  --bg:#0f1620; --card:#18222e; --border:#27333f; --text:#e6edf5; --muted:#93a3b5;
+  --accent-soft:#2a1d15; --green-soft:#132018; --shadow:0 2px 10px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  font-family:"PingFang SC","Microsoft YaHei","Hiragino Sans GB",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1.6;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom));
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+
+/* ---------- 顶部 ---------- */
+header{
+  background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 62%,#35608f 100%);
+  color:#fff; padding:calc(18px + env(safe-area-inset-top)) 0 20px; border-radius:0 0 22px 22px;
+}
+.head-row{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.cd-label{font-size:13px;opacity:.85;letter-spacing:.05em}
+.cd-num{font-size:52px;font-weight:800;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.cd-unit{font-size:18px;font-weight:600;margin-left:4px;opacity:.9}
+.cd-right{text-align:right;font-size:13px;opacity:.9;line-height:1.7}
+.badge{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;background:rgba(255,255,255,.16);margin-top:2px}
+.cd-num.warn{color:#ffd28a}
+.cd-num.danger{color:#ff9f8a}
+
+/* ---------- 卡片 ---------- */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:14px 0;box-shadow:var(--shadow)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.card-t{font-size:15px;font-weight:700;color:var(--navy)}
+html[data-theme="dark"] .card-t, html.theme-dark .card-t{color:#a9c6e8}
+.card-sub{font-size:12.5px;color:var(--muted)}
+
+/* ---------- 三件 ---------- */
+.item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-s);border:1px solid var(--border);margin-bottom:8px;cursor:pointer;transition:background .18s,border-color .18s,transform .12s;min-height:var(--tap)}
+.item:active{transform:scale(.995)}
+.item .box{width:26px;height:26px;border-radius:8px;border:2px solid var(--border);flex:none;display:grid;place-items:center;transition:all .18s;font-size:15px;color:transparent}
+.item.on{background:var(--green-soft);border-color:#bfe0cd}
+.item.on .box{background:var(--green);border-color:var(--green);color:#fff}
+.item .txt{font-size:15px}
+.item .sub{font-size:12px;color:var(--muted)}
+
+/* ---------- 表单 ---------- */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+label.f{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+input[type=text],input[type=number],textarea,select{
+  width:100%;padding:10px 12px;border-radius:var(--radius-s);border:1px solid var(--border);
+  background:var(--bg);color:var(--text);font-size:16px;font-family:inherit;min-height:var(--tap);
+}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--navy2);outline-offset:1px}
+textarea{resize:vertical;min-height:64px}
+.lag{margin-top:10px;padding:10px 12px;border-radius:var(--radius-s);background:var(--accent-soft);color:var(--accent);font-size:14px;font-weight:600;display:none}
+.lag.show{display:block}
+.lag.ok{background:var(--green-soft);color:var(--green)}
+
+/* ---------- 按钮 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 16px;min-height:var(--tap);border-radius:var(--radius-s);border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.ghost{background:transparent}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ---------- 进度条 ---------- */
+.prog{margin:10px 0}
+.prog-h{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.bar{height:9px;border-radius:99px;background:var(--bg);overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--navy2),#4b86c4);transition:width .4s}
+
+/* ---------- 闸门 ---------- */
+.gate{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--border);font-size:14px}
+.gate:last-child{border-bottom:0}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--muted)}
+.dot.green{background:var(--green)} .dot.red{background:var(--accent)} .dot.amber{background:#d99a2b}
+
+/* ---------- 日历 ---------- */
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-title{font-weight:700;font-size:15px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.cal .wd{font-size:11.5px;color:var(--muted);text-align:center;padding-bottom:2px}
+.cal .d{aspect-ratio:1/1;border-radius:10px;display:grid;place-items:center;font-size:13px;color:var(--muted);border:1px solid transparent}
+.cal .d.has{color:var(--text)}
+.cal .d.pass{background:var(--green-soft);border-color:#bfe0cd;color:var(--green);font-weight:700}
+.cal .d.fail{background:var(--accent-soft);border-color:#f0d4c2;color:var(--accent)}
+.cal .d.today{outline:2px solid var(--navy2);outline-offset:1px}
+.cal .d.empty{opacity:0}
+
+/* ---------- 统计 ---------- */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--bg);border-radius:var(--radius-s);padding:12px;text-align:center}
+.stat b{display:block;font-size:24px;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{font-size:11.5px;color:var(--muted)}
+
+/* ---------- 计划折叠 ---------- */
+details{border:1px solid var(--border);border-radius:var(--radius-s);padding:0 14px;margin-bottom:10px;background:var(--card)}
+details[open]{padding-bottom:10px}
+summary{cursor:pointer;padding:12px 0;font-weight:700;font-size:14.5px;color:var(--navy);list-style:none}
+html[data-theme="dark"] summary{color:#a9c6e8}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸ ";color:var(--muted)}
+details[open] summary::before{content:"▾ "}
+details p,details li{font-size:14px;color:var(--text);margin:6px 0}
+details table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+details th,details td{border:1px solid var(--border);padding:6px 8px;text-align:left}
+details th{background:var(--bg)}
+
+/* ---------- 底部导航 ---------- */
+nav{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;
+  background:var(--card);border-top:1px solid var(--border);
+  padding-bottom:env(safe-area-inset-bottom);
+  display:flex;max-width:760px;margin:0 auto;
+}
+nav button{flex:1;background:none;border:0;padding:10px 0 8px;color:var(--muted);font-size:11.5px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button .ic{font-size:19px;line-height:1}
+nav button.on{color:var(--navy);font-weight:700}
+html[data-theme="dark"] nav button.on{color:#a9c6e8}
+
+.hide{display:none!important}
+.mt{margin-top:12px}
+.small{font-size:12.5px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(10px);background:#22303f;color:#fff;padding:10px 18px;border-radius:999px;font-size:13.5px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="head-row">
+      <div>
+        <div class="cd-label">距初试 2026-12-19</div>
+        <div><span class="cd-num" id="cdNum">--</span><span class="cd-unit">天</span></div>
+      </div>
+      <div class="cd-right">
+        <div id="todayStr">--</div>
+        <div class="badge" id="modeBadge">--</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 今日 ============ -->
+  <section id="view-today">
+    <div class="card">
+      <div class="card-h">
+        <div class="card-t">今天 3 件</div>
+        <div class="card-sub" id="passState">未及格</div>
+      </div>
+      <div class="item" data-k="word"><div class="box">✓</div><div><div class="txt">单词 15 分钟</div><div class="sub">不求记住，只求不断</div></div></div>
+      <div class="item" data-k="bm"><div class="box">✓</div><div><div class="txt">保命班当日任务</div><div class="sub">讲解在课堂，做题在晚上</div></div></div>
+      <div class="item" data-k="other"><div class="box">✓</div><div><div class="txt">信号 1 小节 / 概率 5 题</div><div class="sub">二选一</div></div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-t">看板</div><div class="card-sub">输入即存</div></div>
+      <div class="grid2">
+        <div><label class="f">保命班 Day</label><input type="number" id="bmDay" inputmode="numeric" placeholder="38"></div>
+        <div><label class="f">课程 Day</label><input type="number" id="courseDay" inputmode="numeric" placeholder="53"></div>
+      </div>
+      <div class="lag" id="lagBox">—</div>
+      <div class="grid3 mt">
+        <div><label class="f">课堂(h)</label><input type="number" id="classH" inputmode="decimal" step="0.5" placeholder="5"></div>
+        <div><label class="f">英语客观</label><input type="number" id="eng" inputmode="numeric" placeholder="47"></div>
+        <div><label class="f">政治剩题</label><input type="number" id="pol" inputmode="numeric" placeholder="60"></div>
+      </div>
+      <div class="grid2 mt">
+        <div><label class="f">概率进度</label><input type="text" id="prob" placeholder="数字特征"></div>
+        <div><label class="f">信号进度</label><input type="text" id="sig" placeholder="8.9"></div>
+      </div>
+      <div class="mt"><label class="f">备注 / 今天卡在哪</label><textarea id="note" placeholder="例：概率二维题没做完"></textarea></div>
+      <div class="btn-row mt">
+        <button class="btn primary" id="btnDone">今天到此为止</button>
+        <button class="btn ghost" id="btnIdx">重新生成索引</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 看板 ============ -->
+  <section id="view-board" class="hide">
+    <div class="card">
+      <div class="card-h"><div class="card-t">保命班 vs 课程</div><div class="card-sub">最近 14 天</div></div>
+      <div id="chartBm"></div>
+      <div class="small mt">绿线＝保命班 Day，橙线＝课程 Day；两线距离＝你的滞后。</div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">英语客观分</div><div class="card-sub">越高越好</div></div>
+      <div id="chartEng"></div>
+      <div class="grid2 mt">
+        <div><label class="f">年份</label><input type="number" id="engY" placeholder="2015"></div>
+        <div><label class="f">客观分</label><input type="number" id="engS" placeholder="45"></div>
+      </div>
+      <div class="btn-row mt"><button class="btn" id="btnEngAdd">加一条</button></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">四科进度</div></div>
+      <div class="prog"><div class="prog-h"><span>概率</span><span id="pProb">—</span></div><div class="bar"><i id="bProb" style="width:0%"></i></div></div>
+      <div class="prog"><div class="prog-h"><span>信号</span><span id="pSig">—</span></div><div class="bar"><i id="bSig" style="width:0%"></i></div></div>
+      <div class="prog"><div class="prog-h"><span>英语</span><span id="pEng">—</span></div><div class="bar"><i id="bEng" style="width:0%"></i></div></div>
+      <div class="prog"><div class="prog-h"><span>政治</span><span id="pPol">—</span></div><div class="bar"><i id="bPol" style="width:0%"></i></div></div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">闸门状态</div><div class="card-sub">红了就改方案</div></div>
+      <div id="gateList"></div>
+    </div>
+  </section>
+
+  <!-- ============ 历史 ============ -->
+  <section id="view-history" class="hide">
+    <div class="card">
+      <div class="cal-head">
+        <button class="btn ghost" id="calPrev">‹</button>
+        <div class="cal-title" id="calTitle">--</div>
+        <button class="btn ghost" id="calNext">›</button>
+      </div>
+      <div class="cal" id="calGrid"></div>
+      <div class="small mt">绿＝3 件全勾（及格）　浅橙＝有记录但没勾满　空＝没记录</div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">统计</div></div>
+      <div class="stats">
+        <div class="stat"><b id="stWeek">0</b><span>本周及格日</span></div>
+        <div class="stat"><b id="stStreak">0</b><span>连续及格</span></div>
+        <div class="stat"><b id="stTotal">0</b><span>累计及格日</span></div>
+      </div>
+      <div class="small mt" id="stHours">—</div>
+    </div>
+  </section>
+
+  <!-- ============ 周复盘 ============ -->
+  <section id="view-week" class="hide">
+    <div class="card">
+      <div class="card-h"><div class="card-t">本周自动汇总</div><div class="card-sub" id="weekRange">--</div></div>
+      <div class="stats">
+        <div class="stat"><b id="wkPass">0</b><span>及格日</span></div>
+        <div class="stat"><b id="wkBm">–</b><span>保命班区间</span></div>
+        <div class="stat"><b id="wkH">0</b><span>课堂小时</span></div>
+      </div>
+      <div class="lag mt" id="wkGate">—</div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">下周唯一目标</div></div>
+      <textarea id="wkGoal" placeholder="只写 1 件，比如：概率收口"></textarea>
+      <div class="btn-row mt"><button class="btn primary" id="wkSave">保存本周复盘</button></div>
+      <div class="small mt" id="wkSaved">—</div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">四问（自己心里过）</div></div>
+      <ol class="small" style="padding-left:20px;line-height:2">
+        <li>这周及格日几天？（目标 ≥5）</li>
+        <li>保命班从 Day 几到 Day 几？</li>
+        <li>课堂有效时长平均多少？</li>
+        <li>下周唯一要守住的是什么？</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============ 计划 ============ -->
+  <section id="view-plan" class="hide">
+    <div class="card">
+      <div class="card-h"><div class="card-t">爬坡表</div><div class="card-sub">当前强度</div></div>
+      <details open><summary>四阶段强度</summary>
+        <table>
+          <tr><th>阶段</th><th>时间</th><th>强度</th></tr>
+          <tr><td>点火周（压缩）</td><td>10/22–10/24</td><td>6h/天</td></tr>
+          <tr><td>加速</td><td>10/25</td><td>8h/天</td></tr>
+          <tr><td>高强期（有课）</td><td>10/26–11/13</td><td>有课日 6–7h / 空日 9–10h</td></tr>
+          <tr><td>无课冲刺</td><td>11/14–12/18</td><td>9–10h/天</td></tr>
+        </table>
+      </details>
+      <details><summary>三条测试（不达标就退回 5h）</summary>
+        <p>① 每天 ≥6h 且保命班 +1 天　② 睡眠 ≥7h（硬约束）　③ 起床 30 分钟内能进入状态</p>
+      </details>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">三种时间块</div></div>
+      <details><summary>有课日（周一~周五）</summary>
+        <p>06:50 起 → 07:10 早餐 → 07:50 写 3 件 → 08:00 课堂看课 → 12:30 午休+公式 10 分 → 14:00 保命班讲解 → 17:40 图书馆保命班做题 → 19:50 例题 → 20:50 英语 → 21:40 勾卡 → 22:30 上床 → 23:00 睡</p>
+      </details>
+      <details><summary>空日（10/24、10/25、10/31、11/1、11/7、11/8）</summary>
+        <p>07:00 单词 → 08:15 数学补漏例题 3h → 12:45 保命班 3h → 15:45 信号 2h → 18:25 英语 → 19:55 政治 → 20:45 公式默写 → 21:05 机动</p>
+      </details>
+      <details><summary>无课期（11/14–12/18）</summary>
+        <p>07:00 单词 → 08:15 保命班 3h15 → 13:00 信号 3.5h → 17:40 数学 2h → 19:40 英语 → 20:40 政治</p>
+      </details>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">五道闸门</div></div>
+      <details><summary>10/25 主闸门</summary><p>概率 + 级数 + 信号第8章 + 第9章9.1–9.5。绿灯进 10/26；黄灯第9章推 10/26–28；红灯执行方案B。</p></details>
+      <details><summary>10/31 闸门</summary><p>三重线面 + 政治一刷 + 马原2x。</p></details>
+      <details><summary>11/13 检验点（4 问）</summary><p>① 级数/概率/三重/曲线/曲面 例题能做对 80%？② 拉氏、z 公式能默写、标准题能独立做？③ 保命班差 ≤10 天？④ 二刷阅读每篇错 ≤1？</p></details>
+      <details><summary>12/1 切换点</summary><p>不管保命班跟到哪，一律切真题套卷 + 模拟。</p></details>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">SOP 摘要</div></div>
+      <details><summary>SOP-02 概率（专治抽象）</summary><p>① 照抄例题 1 遍 ② 换数字自己做 1 遍 ③ 归纳题型卡（离散=表格加减；连续=画区域+积分）④ 只做标准题</p></details>
+      <details><summary>SOP-05 异常处理</summary><p>不想学→先做 5 分钟机械任务；崩一天→第二天只做最小可行日；连续 2 天没 3 件→切最小可行日查睡眠；红灯→执行方案B；落后>5 天→每天加 0.5 天；进度落后→砍目标不砍睡眠。</p></details>
+    </div>
+  </section>
+
+  <!-- ============ 设置（隐藏页，从页脚进入） ============ -->
+  <section id="view-set" class="hide">
+    <div class="card">
+      <div class="card-h"><div class="card-t">备份与恢复</div></div>
+      <p class="small">数据只存在这台设备的浏览器里。每周日点一次"导出备份"，把 JSON 存到网盘/微信收藏。</p>
+      <div class="btn-row mt">
+        <button class="btn primary" id="btnExport">导出备份</button>
+        <button class="btn" id="btnImport">导入备份</button>
+        <input type="file" id="fileIn" accept="application/json,.json" class="hide">
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">外观</div></div>
+      <div class="btn-row">
+        <button class="btn" data-theme-set="auto">跟随系统</button>
+        <button class="btn" data-theme-set="light">浅色</button>
+        <button class="btn" data-theme-set="dark">深色</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-h"><div class="card-t">危险操作</div></div>
+      <p class="small">清空会删掉所有打卡记录，不可恢复。建议先导出。</p>
+      <div class="btn-row mt"><button class="btn" id="btnReset" style="border-color:#e3b4a2;color:#c05621">清空全部记录</button></div>
+    </div>
+  </section>
+
+</main>
+
+<nav>
+  <button data-tab="today" class="on"><span class="ic">◉</span>今日</button>
+  <button data-tab="board"><span class="ic">▤</span>看板</button>
+  <button data-tab="history"><span class="ic">▦</span>历史</button>
+  <button data-tab="week"><span class="ic">✎</span>周复盘</button>
+  <button data-tab="plan"><span class="ic">☰</span>计划</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   考研 S.O.P. 作战台 — 单文件应用
+   数据：localStorage[key] = { v, exam, days{}, eng[], weeks{}, settings{} }
+   ========================================================= */
+(function(){
+'use strict';
+
+var KEY='kaoyan_sop_v1', EXAM='2026-12-19', TERM_END='2026-11-13';
+var GATES=[
+  {d:'2026-10-25',n:'主闸门',t:'概率+级数+信号第8章+第9章9.1–9.5'},
+  {d:'2026-10-31',n:'闸门5',t:'三重线面+政治一刷+马原2x'},
+  {d:'2026-11-13',n:'结课检验',t:'补漏收口，4问自测'},
+  {d:'2026-12-01',n:'切换点',t:'无条件切真题套卷+模拟'}
+];
+
+/* ---------- 工具 ---------- */
+function pad(n){return n<10?'0'+n:''+n}
+function dk(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function parseDk(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+function todayKey(){return dk(new Date())}
+function addDays(d,n){var x=new Date(d.getTime());x.setDate(x.getDate()+n);return x}
+function dayDiff(a,b){var A=new Date(a.getFullYear(),a.getMonth(),a.getDate());var B=new Date(b.getFullYear(),b.getMonth(),b.getDate());return Math.round((B-A)/86400000)}
+function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(function(){t.classList.remove('show')},1800)}
+function $(id){return document.getElementById(id)}
+
+/* ---------- 状态 ---------- */
+var S;
+function defaults(){
+  return {v:1,exam:EXAM,days:{},eng:[
+    {y:2010,s:36},{y:2011,s:36},{y:2012,s:45},{y:2013,s:41},{y:2014,s:47}
+  ],weeks:{},settings:{theme:'auto'}};
+}
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(!raw) return seed(defaults());
+    var d=JSON.parse(raw), base=defaults();
+    for(var k in base) if(!(k in d)) d[k]=base[k];
+    return d;
+  }catch(e){ return seed(defaults()); }
+}
+function seed(s){
+  /* 预填已知历史，让看板一打开就有数 */
+  var pre=[
+    ['2026-10-20',{bmDay:33,courseDay:46}],
+    ['2026-10-21',{bmDay:34,courseDay:47}],
+    ['2026-10-24',{bmDay:35,courseDay:51}],
+    ['2026-10-25',{bmDay:37,courseDay:52}]
+  ];
+  pre.forEach(function(p){
+    s.days[p[0]]={items:{word:false,bm:false,other:false},note:''};
+    for(var k in p[1]) s.days[p[0]][k]=p[1][k];
+  });
+  return s;
+}
+function save(){ try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('保存失败：存储空间不足')} }
+
+function rec(key){
+  key=key||todayKey();
+  if(!S.days[key]) S.days[key]={items:{word:false,bm:false,other:false},note:''};
+  var r=S.days[key];
+  if(!r.items) r.items={word:false,bm:false,other:false};
+  return r;
+}
+function isPass(r){return !!(r&&r.items&&r.items.word&&r.items.bm&&r.items.other)}
+
+/* ---------- 顶部 ---------- */
+function renderHead(){
+  var left=dayDiff(new Date(),parseDk(EXAM));
+  var el=$('cdNum');
+  el.textContent=left;
+  el.className='cd-num'+(left<=14?' danger':(left<=30?' warn':''));
+  var d=new Date();
+  var wd=['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+  $('todayStr').textContent=dk(d)+' '+wd;
+  var key=dk(d), mode='有课日';
+  var free=['2026-10-24','2026-10-25','2026-10-31','2026-11-01','2026-11-07','2026-11-08'];
+  if(free.indexOf(key)>=0) mode='空日';
+  if(d.getDay()===0||d.getDay()===6) mode=(free.indexOf(key)>=0?'空日':'周末');
+  if(d>=parseDk('2026-11-14')) mode='无课冲刺期';
+  $('modeBadge').textContent=mode;
+}
+
+/* ---------- 今日 ---------- */
+function renderToday(){
+  var r=rec();
+  document.querySelectorAll('#view-today .item').forEach(function(el){
+    var k=el.getAttribute('data-k');
+    el.classList.toggle('on', !!r.items[k]);
+  });
+  var n=(r.items.word?1:0)+(r.items.bm?1:0)+(r.items.other?1:0);
+  $('passState').textContent = n===3?'✓ 今日及格':(n+'/3 件');
+
+  ['bmDay','courseDay','classH','eng','pol'].forEach(function(id){
+    var v=r[id];
+    $(id).value=(v===undefined||v===null||v==='')?'':v;
+  });
+  $('prob').value=r.prob||'';
+  $('sig').value=r.sig||'';
+  $('note').value=r.note||'';
+  renderLag();
+}
+function renderLag(){
+  var r=rec();
+  var bm=+r.bmDay, cd=+r.courseDay, box=$('lagBox');
+  if(!bm||!cd){ box.className='lag'; box.textContent='—'; return; }
+  var lag=cd-bm;
+  box.className='lag show'+(lag<=10?' ok':'');
+  box.textContent = lag<=10 ? ('落后 '+lag+' 天（≤10 天，可接受）') : ('落后 '+lag+' 天 ⚠ 超过 5 天就每天加 0.5 天');
+}
+
+/* ---------- 图表 ---------- */
+function svgWrap(inner,w,h){
+  return '<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" style="display:block">'+inner+'</svg>';
+}
+function chartBm(){
+  var keys=Object.keys(S.days).filter(function(k){return S.days[k].bmDay&&S.days[k].courseDay}).sort().slice(-14);
+  if(keys.length<2){ $('chartBm').innerHTML='<div class="small">记录满 2 天后显示趋势</div>'; return; }
+  var w=640,h=150,padL=8,padR=8,padT=10,padB=18;
+  var all=[]; keys.forEach(function(k){all.push(+S.days[k].bmDay,+S.days[k].courseDay)});
+  var min=Math.min.apply(null,all)-2, max=Math.max.apply(null,all)+2;
+  function X(i){return padL+(w-padL-padR)*i/(keys.length-1)}
+  function Y(v){return padT+(h-padT-padB)*(1-(v-min)/(max-min||1))}
+  var lineBm='',lineCd='',dots='';
+  keys.forEach(function(k,i){
+    var x=X(i);
+    lineBm+=(i?'L':'M')+x.toFixed(1)+' '+Y(+S.days[k].bmDay).toFixed(1)+' ';
+    lineCd+=(i?'L':'M')+x.toFixed(1)+' '+Y(+S.days[k].courseDay).toFixed(1)+' ';
+    dots+='<circle cx="'+x.toFixed(1)+'" cy="'+Y(+S.days[k].bmDay).toFixed(1)+'" r="2.5" fill="#2f7a52"/>';
+  });
+  var grid='';
+  for(var g=0;g<4;g++){var y=padT+(h-padT-padB)*g/3;grid+='<line x1="'+padL+'" y1="'+y+'" x2="'+(w-padR)+'" y2="'+y+'" stroke="currentColor" stroke-opacity=".12"/>'}
+  $('chartBm').innerHTML=svgWrap(
+    '<g color="var(--muted)">'+grid+'</g>'+
+    '<path d="'+lineCd+'" fill="none" stroke="#c05621" stroke-width="2" stroke-linejoin="round"/>'+
+    '<path d="'+lineBm+'" fill="none" stroke="#2f7a52" stroke-width="2" stroke-linejoin="round"/>'+dots
+  ,w,h);
+}
+function chartEng(){
+  var arr=(S.eng||[]).slice().sort(function(a,b){return a.y-b.y});
+  if(!arr.length){ $('chartEng').innerHTML='<div class="small">还没有记录</div>'; return; }
+  var w=640,h=140,padL=8,padR=8,padT=12,padB=20;
+  var max=Math.max(60,Math.max.apply(null,arr.map(function(x){return x.s})));
+  var bw=(w-padL-padR)/arr.length;
+  var bars='',labels='';
+  arr.forEach(function(x,i){
+    var bh=(h-padT-padB)*(x.s/max);
+    var y=h-padB-bh;
+    bars+='<rect x="'+(padL+i*bw+bw*0.18)+'" y="'+y+'" width="'+(bw*0.64)+'" height="'+bh+'" rx="4" fill="#2a4f7d"/>';
+    bars+='<text x="'+(padL+i*bw+bw/2)+'" y="'+(y-5)+'" font-size="11" fill="currentColor" text-anchor="middle">'+x.s+'</text>';
+    labels+='<text x="'+(padL+i*bw+bw/2)+'" y="'+(h-6)+'" font-size="10" fill="currentColor" text-anchor="middle" opacity=".6">'+x.y+'</text>';
+  });
+  $('chartEng').innerHTML=svgWrap('<g color="var(--text)">'+bars+labels+'</g>',w,h);
+}
+function latestField(field){
+  var ks=Object.keys(S.days).sort();
+  for(var i=ks.length-1;i>=0;i--){
+    var v=S.days[ks[i]]&&S.days[ks[i]][field];
+    if(v!==undefined&&v!==null&&v!=='') return v;
+  }
+  return '';
+}
+function renderProgress(){
+  var probTxt=latestField('prob')||'—';
+  var sigTxt=latestField('sig')||'—';
+  var eng=latestField('eng'), pol=latestField('pol');
+  $('pProb').textContent=probTxt; $('pSig').textContent=sigTxt;
+  $('pEng').textContent=eng?('客观 '+eng):'—'; $('pPol').textContent=pol?('剩 '+pol+' 题'):'—';
+
+  var pP=0, map={'事件':1,'一维':1,'多维':2,'二维':2,'数字特征':4,'统计':5,'大数':5,'估计':5};
+  for(var k in map){ if(probTxt.indexOf(k)>=0) pP=Math.max(pP,map[k]); }
+
+  var pS=0, mt=/9\.(\d)/.exec(sigTxt);
+  if(mt){ pS=6+ +mt[1]; }
+  else { var m8=/8\.(\d+)/.exec(sigTxt); if(m8) pS=Math.max(0,+m8[1]-2); }
+
+  function setBar(id,val){ $(id).style.width=(val>0?Math.min(100,Math.round(val)):0)+'%'; }
+  setBar('bProb', pP?pP/6*100:0);
+  setBar('bSig',  pS?pS/19*100:0);
+  setBar('bEng',  eng?(+eng)/60*100:0);
+  if(pol!=='' ){ setBar('bPol', (1-(+pol)/720)*100); } else { setBar('bPol',0); }
+}
+function renderGates(){
+  var t=todayKey(), html='';
+  GATES.forEach(function(g){
+    var d=dayDiff(parseDk(t),parseDk(g.d));
+    var cls=d<0?'dot green':(d<=2?'dot amber':'dot');
+    var when=d<0?('已过 '+(0-d)+' 天'):(d===0?'就在今天':(d+' 天后'));
+    html+='<div class="gate"><span class="'+cls+'"></span><div><b>'+g.n+'</b> · '+g.d+' <span class="small">'+when+'</span><div class="small">'+g.t+'</div></div></div>';
+  });
+  $('gateList').innerHTML=html;
+}
+
+/* ---------- 历史 ---------- */
+var calCursor=new Date();
+function renderHistory(){
+  var y=calCursor.getFullYear(),m=calCursor.getMonth();
+  $('calTitle').textContent=y+' 年 '+(m+1)+' 月';
+  var first=new Date(y,m,1), start=first.getDay();
+  var dim=new Date(y,m+1,0).getDate();
+  var html='';
+  ['日','一','二','三','四','五','六'].forEach(function(w){html+='<div class="wd">'+w+'</div>'});
+  for(var i=0;i<start;i++) html+='<div class="d empty"></div>';
+  var today=todayKey();
+  for(var d=1;d<=dim;d++){
+    var key=y+'-'+pad(m+1)+'-'+pad(d), r=S.days[key];
+    var cls='d';
+    if(r){ cls+=' has'+(isPass(r)?' pass':' fail'); }
+    if(key===today) cls+=' today';
+    html+='<div class="'+cls+'">'+d+'</div>';
+  }
+  $('calGrid').innerHTML=html;
+
+  var keys=Object.keys(S.days).sort();
+  var passKeys=keys.filter(function(k){return isPass(S.days[k])});
+  $('stTotal').textContent=passKeys.length;
+  /* 本周（周一为起点） */
+  var now=new Date(), mon=addDays(now,-((now.getDay()+6)%7));
+  var wk=0,h=0;
+  for(var i2=0;i2<7;i2++){var k2=dk(addDays(mon,i2)),r2=S.days[k2];if(r2&&isPass(r2))wk++;if(r2&&r2.classH)h+=+r2.classH}
+  $('stWeek').textContent=wk;
+  /* 连续及格（从今天往回） */
+  var streak=0,cur=new Date();
+  for(var i3=0;i3<400;i3++){
+    var k3=dk(cur),r3=S.days[k3];
+    if(r3&&isPass(r3)){streak++} else if(k3!==today){break}
+    cur=addDays(cur,-1);
+  }
+  $('stStreak').textContent=streak;
+  $('stHours').textContent='累计课堂时长 '+ (keys.reduce(function(a,k){var r=S.days[k];return a+(r.classH?+r.classH:0)},0)) +' 小时';
+}
+
+/* ---------- 周复盘 ---------- */
+function weekKeys(){
+  var now=new Date(), mon=addDays(now,-((now.getDay()+6)%7));
+  var arr=[]; for(var i=0;i<7;i++)arr.push(dk(addDays(mon,i)));
+  return {mon:mon,arr:arr};
+}
+function renderWeek(){
+  var w=weekKeys(), pass=0,h=0,bms=[];
+  w.arr.forEach(function(k){
+    var r=S.days[k];
+    if(r&&isPass(r))pass++;
+    if(r&&r.classH)h+=+r.classH;
+    if(r&&r.bmDay)bms.push(+r.bmDay);
+  });
+  $('weekRange').textContent=dk(w.mon)+' ~ '+dk(addDays(w.mon,6));
+  $('wkPass').textContent=pass;
+  $('wkBm').textContent=bms.length?(Math.min.apply(null,bms)+'→'+Math.max.apply(null,bms)):'–';
+  $('wkH').textContent=h;
+  var g=$('wkGate');
+  if(pass>=5){g.className='lag show ok';g.textContent='本周及格 '+pass+' 天 → 绿灯，按计划推进';}
+  else{g.className='lag show';g.textContent='本周及格 '+pass+' 天（<5）→ 黄灯：先切最小可行日，不动目标';}
+  var wk=(S.weeks||{})[dk(w.mon)];
+  $('wkGoal').value=wk&&wk.goal?wk.goal:'';
+  $('wkSaved').textContent=wk?('已保存于 '+wk.at):'—';
+}
+
+/* ---------- 渲染总控 ---------- */
+function renderAll(){
+  renderHead(); renderToday(); chartBm(); chartEng(); renderProgress(); renderGates();
+  renderHistory(); renderWeek(); applyTheme();
+}
+function applyTheme(){
+  var t=(S.settings&&S.settings.theme)||'auto';
+  var root=document.documentElement;
+  if(t==='auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme',t);
+}
+
+/* ---------- 导航 ---------- */
+var TABS=['today','board','history','week','plan','set'];
+function go(tab){
+  TABS.forEach(function(t){ $('view-'+t).classList.toggle('hide',t!==tab); });
+  document.querySelectorAll('nav button').forEach(function(b){ b.classList.toggle('on',b.getAttribute('data-tab')===tab); });
+  try{ if(location.hash!=='#'+tab) history.replaceState(null,'','#'+tab); }catch(e){}
+  if(tab==='board'){chartBm();chartEng();renderProgress();renderGates();}
+  if(tab==='history')renderHistory();
+  if(tab==='week')renderWeek();
+  window.scrollTo(0,0);
+}
+
+/* ---------- 绑定 ---------- */
+function bind(){
+  /* 3 件 */
+  document.querySelectorAll('#view-today .item').forEach(function(el){
+    el.addEventListener('click',function(){
+      var k=el.getAttribute('data-k'), r=rec();
+      r.items[k]=!r.items[k];
+      save(); renderToday(); renderHistory();
+      if(isPass(r)) toast('今日及格 ✓');
+    });
+  });
+  /* 看板输入 */
+  [['bmDay','number'],['courseDay','number'],['classH','number'],['eng','number'],['pol','number'],['prob','text'],['sig','text']].forEach(function(p){
+    var el=$(p[0]);
+    el.addEventListener('input',function(){
+      var r=rec(), v=el.value.trim();
+      if(p[1]==='number'){ r[p[0]] = v===''?'':+v; } else { r[p[0]] = v; }
+      save(); renderLag(); renderProgress();
+    });
+  });
+  $('note').addEventListener('input',function(){ var r=rec(); r.note=this.value; save(); });
+  $('btnDone').addEventListener('click',function(){
+    var r=rec();
+    r.doneAt=new Date().toISOString();
+    save(); toast('已记录，去睡觉吧'); renderHistory();
+  });
+  $('btnIdx').addEventListener('click',function(){ save(); renderAll(); toast('索引已重建'); });
+
+  /* 英语加一条 */
+  $('btnEngAdd').addEventListener('click',function(){
+    var y=+$('engY').value, s=+$('engS').value;
+    if(!y||!s){toast('年份和分数都要填');return}
+    S.eng=S.eng||[];
+    S.eng=S.eng.filter(function(x){return x.y!==y});
+    S.eng.push({y:y,s:s}); save(); $('engY').value='';$('engS').value='';
+    chartEng(); toast('已加入 '+y+' 年');
+  });
+
+  /* 日历翻页 */
+  $('calPrev').addEventListener('click',function(){calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()-1,1);renderHistory()});
+  $('calNext').addEventListener('click',function(){calCursor=new Date(calCursor.getFullYear(),calCursor.getMonth()+1,1);renderHistory()});
+
+  /* 周复盘保存 */
+  $('wkSave').addEventListener('click',function(){
+    var w=weekKeys(), k=dk(w.mon);
+    S.weeks=S.weeks||{};
+    S.weeks[k]={goal:$('wkGoal').value,at:new Date().toLocaleString('zh-CN')};
+    save(); renderWeek(); toast('本周复盘已保存');
+  });
+
+  /* 导航 */
+  document.querySelectorAll('nav button').forEach(function(b){
+    b.addEventListener('click',function(){go(b.getAttribute('data-tab'))});
+  });
+
+  /* 备份 */
+  $('btnExport').addEventListener('click',function(){
+    var blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='sop-backup-'+todayKey()+'.json';
+    a.click();
+    setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
+    toast('已导出');
+  });
+  $('btnImport').addEventListener('click',function(){ $('fileIn').click(); });
+  $('fileIn').addEventListener('change',function(e){
+    var f=e.target.files[0]; if(!f)return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      try{
+        var d=JSON.parse(rd.result);
+        if(!d||!d.days) throw new Error('格式不对');
+        S=d; save(); renderAll(); toast('已导入');
+      }catch(err){ toast('导入失败：'+err.message); }
+    };
+    rd.readAsText(f);
+  });
+  $('btnReset').addEventListener('click',function(){
+    if(!confirm('确定清空所有打卡记录？建议先导出备份。'))return;
+    S=seed(defaults()); save(); renderAll(); toast('已清空');
+  });
+  document.querySelectorAll('[data-theme-set]').forEach(function(b){
+    b.addEventListener('click',function(){
+      S.settings=S.settings||{}; S.settings.theme=b.getAttribute('data-theme-set');
+      save(); applyTheme(); toast('已切换外观');
+    });
+  });
+}
+
+/* ---------- 启动 ---------- */
+S=load();
+bind();
+renderAll();
+if(!localStorage.getItem(KEY)) save();
+var _h=(location.hash||'').replace('#','');
+if(_h && TABS.indexOf(_h)>=0 && _h!=='today'){ go(_h); }
+})();
+</script>
+</body>
+</html>
