@@ -353,6 +353,18 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
           <button class="btn" id="btnImport">导入备份</button>
           <input type="file" id="fileIn" accept="application/json,.json" class="hide">
         </div>
+        <div class="mt" style="border-top:1px solid var(--border);padding-top:11px">
+          <div class="small" style="font-weight:700;color:var(--navy)">云备份（GitHub 私有 Gist · 可选）</div>
+          <div class="small mt">每次改动 6 秒后自动推到你的私有 gist。token 只存在本机，<b>不会写进导出的备份文件</b>。</div>
+          <input type="password" id="cloudToken" placeholder="粘贴 fine-grained token（只给 Gist 权限）" style="margin-top:8px" autocomplete="off">
+          <div class="btn-row mt">
+            <button class="btn primary" id="btnCloudOn">开启云备份</button>
+            <button class="btn" id="btnCloudNow">立即备份</button>
+            <button class="btn" id="btnCloudOff">关闭</button>
+          </div>
+          <div class="small mt" id="cloudStatus">未开启</div>
+          <div class="small mt">token 生成：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens → 只勾 <b>Gists: Read and write</b></div>
+        </div>
         <div class="btn-row mt">
           <button class="btn" data-theme-set="auto">跟随系统</button>
           <button class="btn" data-theme-set="light">浅色</button>
@@ -549,7 +561,12 @@ function seed(s){
   });
   return s;
 }
-function save(){ try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('保存失败：空间不足')} }
+var booted=false;
+function save(){
+  try{ localStorage.setItem(KEY,JSON.stringify(S)); }
+  catch(e){ toast('保存失败：空间不足'); }
+  if(booted) cloudQueue();
+}
 
 function rec(key){
   key=key||todayKey();
@@ -837,10 +854,84 @@ function renderScoreChart(){
   list.textContent='最近：'+last.label+' '+last.score+'/'+last.full+' ｜ 共 '+arr.length+' 次';
 }
 
+/* ---------- 云备份（GitHub 私有 Gist） ---------- */
+var CLOUDKEY='kaoyan_sop_cloud', cloudTimer=null;
+function cloudCfg(){
+  try{ return JSON.parse(localStorage.getItem(CLOUDKEY)||'{}')||{}; }catch(e){ return {}; }
+}
+function cloudSet(o){ try{ localStorage.setItem(CLOUDKEY,JSON.stringify(o)); }catch(e){} }
+function cloudStatus(msg,ok){
+  var el=$('cloudStatus'); if(!el) return;
+  el.textContent=msg;
+  el.style.color = ok===false ? 'var(--accent)' : (ok===true?'var(--green)':'');
+}
+function renderCloud(){
+  var c=cloudCfg();
+  if(c.token && c.gistId){
+    cloudStatus('已开启 · 账号 '+c.login+' · 上次成功 '+(c.lastAt||'—')+(c.lastErr?(' · 上次失败 '+c.lastErr):''), c.lastErr?false:true);
+  }else if(c.token){
+    cloudStatus('token 已保存，还没创建 gist——点「开启云备份」', null);
+  }else{
+    cloudStatus('未开启', null);
+  }
+}
+function cloudQueue(){
+  var c=cloudCfg();
+  if(!c.token || !c.gistId) return;
+  clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(cloudPush,6000);
+}
+function cloudPush(){
+  var c=cloudCfg();
+  if(!c.token || !c.gistId) return;
+  cloudStatus('正在云备份…', null);
+  fetch('https://api.github.com/gists/'+c.gistId,{
+    method:'PATCH',
+    headers:{'Authorization':'Bearer '+c.token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+    body:JSON.stringify({files:{'kaoyan-sop.json':{content:JSON.stringify(S,null,2)}}})
+  }).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var cc=cloudCfg(); cc.lastAt=new Date().toLocaleString('zh-CN'); cc.lastErr=''; cloudSet(cc);
+    renderCloud(); toast('已云备份');
+  }).catch(function(e){
+    var cc=cloudCfg(); cc.lastErr=e.message; cloudSet(cc); renderCloud();
+  });
+}
+function cloudEnable(){
+  var inp=($('cloudToken')||{}).value||'';
+  var token=inp.trim() || cloudCfg().token;
+  if(!token){ cloudStatus('先粘一个 token', false); return; }
+  cloudStatus('正在验证 token…', null);
+  fetch('https://api.github.com/user',{headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json'}})
+  .then(function(r){
+    if(!r.ok) throw new Error('token 无效（HTTP '+r.status+'）');
+    return r.json();
+  })
+  .then(function(u){
+    cloudStatus('token 有效，账号 '+u.login+'，正在创建私有 gist…', null);
+    return fetch('https://api.github.com/gists',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+      body:JSON.stringify({description:'考研SOP作战台 自动备份',public:false,
+        files:{'kaoyan-sop.json':{content:JSON.stringify(S,null,2)}}})
+    }).then(function(g){
+      if(!g.ok) throw new Error('创建 gist 失败（HTTP '+g.status+'）——确认 token 勾了 Gists 权限');
+      return g.json().then(function(gj){
+        cloudSet({token:token,gistId:gj.id,login:u.login,
+          lastAt:new Date().toLocaleString('zh-CN'),lastErr:''});
+        $('cloudToken').value='';
+        renderCloud(); toast('云备份已开启');
+      });
+    });
+  })
+  .catch(function(e){ cloudStatus('开启失败：'+e.message, false); });
+}
+
 /* ---------- 计划 ---------- */
 function renderPlan(){
   var t=todayKey(), idx=phaseOf(t);
   $('phaseNow').textContent='现在：'+PHASES[idx].n;
+  renderCloud();
   var tb=$('rampTable').querySelector('tbody');
   tb.innerHTML='';
   PHASES.forEach(function(p,i){
@@ -938,6 +1029,13 @@ function bind(){
     toast('已记下 '+curLabel+'：'+sc+' 分');
   });
 
+  $('btnCloudOn').addEventListener('click',cloudEnable);
+  $('btnCloudNow').addEventListener('click',function(){ cloudPush(); });
+  $('btnCloudOff').addEventListener('click',function(){
+    if(!confirm('关闭云备份？本机保存的 token 会被删除。')) return;
+    localStorage.removeItem(CLOUDKEY); renderCloud(); toast('已关闭云备份');
+  });
+
   $('btnExport').addEventListener('click',function(){
     S.settings=S.settings||{}; S.settings.lastExport=todayKey(); save();
     var blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
@@ -997,7 +1095,8 @@ window.addEventListener('storage',function(e){
 S=load();
 bind();
 renderAll();
-save();  /* 顺手把迁移/规范化的结果落盘，保证导出的备份也是新格式 */
+save();      /* booted=false，启动时不会触发云备份 */
+booted=true;
 var _h=(location.hash||'').replace('#','');
 if(_h && TABS.indexOf(_h)>=0 && _h!=='today') go(_h);
 })();

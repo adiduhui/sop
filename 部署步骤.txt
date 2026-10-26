@@ -63,6 +63,25 @@
   【建议】每周日复盘时顺手导出一次。
   【注意】旧版（v1）数据会自动迁移到新版，不会丢。
 
+  ── 自动云备份（可选）─────────────────────────────
+  位置：计划 → 参考 → 备份与外观 → 云备份
+
+  一次配置，之后每次改动 6 秒后自动推到你的「私有 Gist」：
+
+    1) GitHub → Settings → Developer settings
+       → Personal access tokens → Fine-grained tokens
+       → Generate new token
+    2) 只勾 「Gists : Read and write」，别的都不要
+    3) 有效期建议 90 天，生成后复制 token
+    4) 粘到应用里的输入框 → 点「开启云备份」
+    5) 状态会变成「已开启 · 账号 xxx · 上次成功 …」
+
+  安全说明：
+    · token 只存在这台设备的 localStorage 里，**不会写进导出的 JSON**
+    · gist 是 private（不公开、不被搜索）
+    · 想停止：点「关闭云备份」，或去 GitHub 把 token Revoke
+    · 换设备/清缓存后，需要重新粘一次 token
+
 
 ============================================================
 五、每天怎么用（30 秒）
