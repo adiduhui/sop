@@ -286,6 +286,8 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
       <div class="chips" id="chipSubj" style="margin-top:5px"></div>
       <div class="small mt">哪一套</div>
       <div class="chips" id="chipLabel" style="margin-top:5px"></div>
+      <div class="small mt">第几轮</div>
+      <div class="chips" id="chipRound" style="margin-top:5px"></div>
       <div class="grid2 mt">
         <div><label class="f">得分</label><input type="number" id="scoreVal" inputmode="numeric" placeholder="0"></div>
         <div><label class="f">满分</label><input type="number" id="scoreFull" inputmode="numeric"></div>
@@ -332,6 +334,17 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
     <div class="card">
       <div class="card-h"><div class="card-t">闸门</div><div class="card-sub">红了就改方案</div></div>
       <div id="gateList"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><div class="card-t">📊 真题台账</div><div class="card-sub">信号 30 套 × 2 轮</div></div>
+      <div class="stats">
+        <div class="stat"><b id="tkR1">0</b><span>一轮 / 30</span></div>
+        <div class="stat"><b id="tkR2">0</b><span>二轮 / 30</span></div>
+        <div class="stat"><b id="tkR0">0</b><span>模拟 / 5</span></div>
+      </div>
+      <div class="small mt" id="tkLast">—</div>
+      <div class="small mt" style="color:var(--accent)">由易到难｜二轮只做错题｜前高后低正常</div>
     </div>
 
     <div class="card">
@@ -448,12 +461,13 @@ function polWeekNow(){
 var WORD_CHIPS=['20','30','50','80','100','150'];
 var MATH_CHIPS=['向量解析几何','三重积分','曲线积分','曲面积分','级数','线代','保命班完结'];
 var SUBJ=[
-  {k:'sig', n:'信号', full:150, labels:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026']},
+  {k:'sig', n:'信号', full:150, labels:['2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025','2026','题库1','题库2','题库3','题库4','题库5','题库6','题库7','题库8','题库9','题库10','题库11','题库12','题库13']},
   {k:'math',n:'数学', full:150, labels:['套1','套2','套3','套4','套5','套6','套7','套8','套9','套10','套11','套12']},
   {k:'eng', n:'英语', full:60,  labels:['2015','2016','2017','2018','2019','2020','2021','2022','2023','2024','2025']},
   {k:'pol', n:'政治', full:50,  labels:['肖1','肖2','肖3','肖4','肖5','肖6','肖7','肖8']}
 ];
-var curSubj='sig', curLabel='';
+var curSubj='sig', curLabel='', curRound=1;
+var ROUND_CHIPS=['一轮','二轮','模拟'];
 var ENG_CHIPS=['阅读1-2','阅读3-4','新题型','完型','翻译','作文','整卷'];
 var GOAL_CHIPS=['概率收口','三重线面','保命班追平','政治一刷','信号第9章','英语作文','不崩'];
 var GATES=[
@@ -577,7 +591,8 @@ function sanitize(raw){
       if(sc===null||sc<0){ cnt.dropped++; return; }
       var fu=numOr(x.full,100); if(fu<=0) fu=100;
       out.scores.push({subj:x.subj,label:strOf(x.label)||'—',
-        score:sc,full:fu,d:isDateKey(x.d)?x.d:todayKey()});
+        score:sc,full:fu,d:isDateKey(x.d)?x.d:todayKey(),
+        round:(x.round===2?2:(x.round===0?0:1))});
       cnt.scores++;
     });
   }
@@ -877,21 +892,26 @@ function scoreCfg(k){
   for(var i=0;i<SUBJ.length;i++) if(SUBJ[i].k===k) return SUBJ[i];
   return SUBJ[0];
 }
+function roundName(r){ return r===0?'模拟':(r===2?'二轮':'一轮'); }
 function renderScoreForm(){
   var cfg=scoreCfg(curSubj);
   $('scoreSubjName').textContent=cfg.n;
-  $('scoreTrendName').textContent=cfg.n;
+  $('scoreTrendName').textContent=cfg.n+' · '+roundName(curRound);
   buildChips('chipSubj',SUBJ.map(function(s){return s.n}),cfg.n,function(v){
     var c=SUBJ.filter(function(s){return s.n===v})[0]||SUBJ[0];
     curSubj=c.k; curLabel=''; $('scoreVal').value='';
     renderScoreForm();
   });
   buildChips('chipLabel',cfg.labels,curLabel,function(v){ curLabel=v; renderScoreForm(); });
+  buildChips('chipRound',ROUND_CHIPS,roundName(curRound),function(v){
+    curRound = (v==='一轮'?1:(v==='二轮'?2:0));
+    renderScoreForm();
+  });
   $('scoreFull').value=cfg.full;
   renderScoreChart();
 }
 function renderScoreChart(){
-  var arr=(S.scores||[]).filter(function(x){return x.subj===curSubj});
+  var arr=(S.scores||[]).filter(function(x){return x.subj===curSubj && (x.round||1)===curRound;});
   var host=$('chartScore'), list=$('scoreList');
   if(!arr.length){ host.innerHTML='<div class="small">还没有成绩，先在上面记一次</div>'; list.textContent='—'; return; }
   var w=640,h=150,padL=8,padR=8,padT=16,padB=22;
@@ -907,6 +927,24 @@ function renderScoreChart(){
   host.innerHTML='<svg viewBox="0 0 '+w+' '+h+'" width="100%" height="'+h+'" preserveAspectRatio="none" style="display:block"><g color="var(--text)">'+bars+'</g></svg>';
   var last=arr[arr.length-1];
   list.textContent='最近：'+last.label+' '+last.score+'/'+last.full+' ｜ 共 '+arr.length+' 次';
+}
+
+/* ---------- 真题台账 ---------- */
+function renderLedger(){
+  var e1=$('tkR1'); if(!e1) return;
+  var sg=(S.scores||[]).filter(function(x){return x.subj==='sig'});
+  function uniq(rd){
+    var seen={}, n=0;
+    sg.forEach(function(x){
+      if((x.round||1)===rd && !seen[x.label]){ seen[x.label]=1; n++; }
+    });
+    return n;
+  }
+  e1.textContent=uniq(1);
+  $('tkR2').textContent=uniq(2);
+  $('tkR0').textContent=uniq(0);
+  var last=sg.slice(-3).map(function(x){ return x.label+'('+roundName(x.round||1)+') '+x.score; });
+  $('tkLast').textContent = last.length ? ('最近：'+last.join('　｜　')) : '还没记过信号成绩';
 }
 
 /* ---------- 云备份（GitHub 私有 Gist） ---------- */
@@ -991,6 +1029,7 @@ function renderPlan(){
     if(pw) elw.textContent='本周 W'+(pw.i+1)+'：'+pw.w.t;
     else elw.textContent = (t<'2026-10-31' ? '政治计划 10/31 开始' : '政治七周计划已结束');
   }
+  renderLedger();
   renderCloud();
   var tb=$('rampTable').querySelector('tbody');
   tb.innerHTML='';
@@ -1083,10 +1122,10 @@ function bind(){
     if(!curLabel){ toast('先选"哪一套"'); return; }
     if(sc===''){ toast('填个分数'); return; }
     S.scores=S.scores||[];
-    S.scores=S.scores.filter(function(x){ return !(x.subj===curSubj && x.label===curLabel); });
-    S.scores.push({subj:curSubj,label:curLabel,score:+sc,full:+fu||100,d:todayKey()});
+    S.scores=S.scores.filter(function(x){ return !(x.subj===curSubj && x.label===curLabel && (x.round||1)===curRound); });
+    S.scores.push({subj:curSubj,label:curLabel,score:+sc,full:+fu||100,d:todayKey(),round:curRound});
     save(); $('scoreVal').value=''; renderScoreChart();
-    toast('已记下 '+curLabel+'：'+sc+' 分');
+    toast('已记下 '+curLabel+'（'+roundName(curRound)+'）：'+sc+' 分');
   });
 
   $('btnCloudOn').addEventListener('click',cloudEnable);
