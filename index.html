@@ -242,6 +242,8 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
     <div class="card">
       <div class="card-h"><div class="card-t">政治进度</div><div class="card-sub">做完哪些点哪些</div></div>
       <div class="chips" id="chipPol"></div>
+      <div class="small mt">今天刷了</div>
+      <div class="chips" id="chipPolN" style="margin-top:5px"></div>
     </div>
 
     <div class="card">
@@ -333,6 +335,38 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
     </div>
 
     <div class="card">
+      <div class="card-h"><div class="card-t">📕 政治提分</div><div class="card-sub">50% → 66%</div></div>
+      <div class="small">每天 30 题 · 25 分钟 · 全碎片（课间 15 + 睡前 15）</div>
+      <div class="lag ok" id="polWeekNow" style="margin-top:9px">—</div>
+      <details class="mt"><summary>七周日程</summary>
+        <table>
+          <thead><tr><th>周</th><th>日期</th><th>主任务</th></tr></thead>
+          <tbody>
+            <tr><td>W1</td><td>10/31–11/6</td><td>马原一刷(20) + 错因归类(10)</td></tr>
+            <tr><td>W2</td><td>11/7–11/13</td><td>马原收尾 + 多选错题归类</td></tr>
+            <tr><td>W3</td><td>11/14–11/20</td><td>四科多选二刷 + 马原错题</td></tr>
+            <tr><td>W4</td><td>11/21–11/27</td><td>肖八选择 + 错题回看</td></tr>
+            <tr><td>W5</td><td>11/28–12/4</td><td>肖八错题 + 时政开刷</td></tr>
+            <tr><td>W6</td><td>12/5–12/11</td><td>肖四选择 + 大题开背</td></tr>
+            <tr><td>W7</td><td>12/12–12/18</td><td>肖四大题背 2 遍 + 时政收尾</td></tr>
+          </tbody>
+        </table>
+      </details>
+      <details><summary>错因四坑（最有效）</summary>
+        <p>① 绝对化表述（“唯一”“根本”“彻底解决”）　② 张冠李戴<br>③ 时序错（“第一次”“标志”）　④ 偷换主体（党/国家/人民/人大）</p>
+        <p>每题错了只记一句“踩了哪个坑 + 关键词”，<b>不重做整套题</b>。</p>
+      </details>
+      <details><summary>马原只听 2 章</summary>
+        <p><b>唯物辩证法</b>（矛盾/量变质变/否定之否定）+ <b>认识论</b>（实践与认识/真理）。2 倍速约 3 小时，拆 25 分钟 × 7 次。</p>
+        <p>其余（唯物论/唯物史观/政经/科社）纯刷题，一个字不用看。</p>
+      </details>
+      <details><summary>砍单顺序</summary>
+        <p>砍1 思修 → 砍2 时政提前刷（12 月必补）→ 砍3 毛中特低频</p>
+        <p><b>绝不砍：马原、史纲、肖八肖四、肖四大题背诵</b></p>
+      </details>
+    </div>
+
+    <div class="card">
       <div class="card-h"><div class="card-t">参考</div></div>
       <details><summary>有课日时间块</summary>
         <p>06:50 起 → 07:10 早餐 → 07:50 写今日清单 → 08:00 课堂看课 → 12:30 午休＋公式 10 分 → 14:00 保命班讲解 → 17:40 图书馆保命班做题 → 19:50 例题 → 20:50 英语 → 21:40 勾卡 → 22:30 上床 → 23:00 睡</p>
@@ -393,7 +427,24 @@ var FLOOR=['word','bm','other'];
 var FULL=['word','bm','other','prob','math','eng','pol'];
 var PROB_CHIPS=['随机事件','一维','二维','数字特征','统计','已完成'];
 var SIG_CHIPS=['6.11','6.12','第7章','8.1','8.2','8.3','8.4','8.5','8.6','8.7','8.8','8.9','8.10','9.1','9.2','9.3','9.4','9.5','9.6','9.7','9.8','9.9','真题'];
-var POL_CHIPS=['强化课','马原选择','新思想选择','史纲选择','毛中特选择','思修选择','时政','选择题一刷','肖8','大题背诵'];
+var POL_CHIPS=['马原选择','马原·辩证法','马原·认识论','错因归类','多选二刷','肖8','肖4','时政','大题背诵'];
+var POLN_CHIPS=['0','15','30','50'];
+var POLWEEKS=[
+  {s:'2026-10-31',e:'2026-11-06',t:'马原一刷(20) + 错因归类(10)'},
+  {s:'2026-11-07',e:'2026-11-13',t:'马原收尾 + 多选错题归类'},
+  {s:'2026-11-14',e:'2026-11-20',t:'四科多选二刷 + 马原错题'},
+  {s:'2026-11-21',e:'2026-11-27',t:'肖八选择 + 错题回看'},
+  {s:'2026-11-28',e:'2026-12-04',t:'肖八错题 + 时政开刷'},
+  {s:'2026-12-05',e:'2026-12-11',t:'肖四选择 + 大题开背'},
+  {s:'2026-12-12',e:'2026-12-18',t:'肖四大题背2遍 + 时政收尾'}
+];
+function polWeekNow(){
+  var t=todayKey();
+  for(var i=0;i<POLWEEKS.length;i++){
+    if(t>=POLWEEKS[i].s && t<=POLWEEKS[i].e) return {i:i,w:POLWEEKS[i]};
+  }
+  return null;
+}
 var WORD_CHIPS=['20','30','50','80','100','150'];
 var MATH_CHIPS=['向量解析几何','三重积分','曲线积分','曲面积分','级数','线代','保命班完结'];
 var SUBJ=[
@@ -676,6 +727,10 @@ function renderToday(){
     if(i>=0) rr.polProg.splice(i,1); else rr.polProg.push(v);
     save(); renderToday();
   },r.polProg);
+  buildChips('chipPolN',POLN_CHIPS,(r.polN==null?'':String(r.polN)),function(v){
+    var rr=rec(); rr.polN=(+v===rr.polN?'':+v); save(); renderToday();
+    if(rr.polN) toast('政治 '+rr.polN+' 题');
+  });
   buildChips('chipMath',MATH_CHIPS,null,function(v){
     var rr=rec(); var i=rr.mathProg.indexOf(v);
     if(i>=0) rr.mathProg.splice(i,1); else rr.mathProg.push(v);
@@ -931,6 +986,11 @@ function cloudEnable(){
 function renderPlan(){
   var t=todayKey(), idx=phaseOf(t);
   $('phaseNow').textContent='现在：'+PHASES[idx].n;
+  var pw=polWeekNow(), elw=$('polWeekNow');
+  if(elw){
+    if(pw) elw.textContent='本周 W'+(pw.i+1)+'：'+pw.w.t;
+    else elw.textContent = (t<'2026-10-31' ? '政治计划 10/31 开始' : '政治七周计划已结束');
+  }
   renderCloud();
   var tb=$('rampTable').querySelector('tbody');
   tb.innerHTML='';
