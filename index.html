@@ -191,15 +191,16 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
         <div class="card-sub" id="passState">底线 0/3</div>
       </div>
       <div class="tier">底线 3 件 · 崩了也做这 3 件（做完＝及格）</div>
-      <div class="item" data-k="word"><div class="box">✓</div><div><div class="txt">单词 <span id="wordN">50</span> 个</div><div class="sub">不求记住，只求不断 · 下面点个数</div></div></div>
+      <div class="item" data-k="word"><div class="box">✓</div><div><div class="txt">单词 <span id="wordN">50</span> 个</div><div class="sub">真题生词本 · 关门前 20 分钟</div></div></div>
       <div class="chips" id="chipWord" style="margin:-2px 0 9px"></div>
       <div class="item" data-k="bm"><div class="box">✓</div><div><div class="txt">保命班当日任务</div><div class="sub">讲解在课堂，做题在晚上</div></div></div>
-      <div class="item" data-k="other"><div class="box">✓</div><div><div class="txt">信号 1 小节</div><div class="sub">第9章 / 每 2 天一套整卷</div></div></div>
-      <div class="tier" style="margin-top:13px">拉满 4 件 · 状态好就全上</div>
+      <div class="item" data-k="other"><div class="box">✓</div><div><div class="txt">信号 1 小节</div><div class="sub">第9章收尾 / 真题</div></div></div>
+      <div class="tier" style="margin-top:13px">拉满 5 件 · 状态好就全上</div>
       <div class="item" data-k="prob"><div class="box">✓</div><div><div class="txt">概率 5 题</div><div class="sub">照抄例题 1 遍也算</div></div></div>
-      <div class="item" data-k="math"><div class="box">✓</div><div><div class="txt">数学补漏例题</div><div class="sub">三重 / 线面 / 880 选做</div></div></div>
+      <div class="item" data-k="math"><div class="box">✓</div><div><div class="txt">数学补漏 / ε-δ 例题</div><div class="sub">三重 / 线面</div></div></div>
       <div class="item" data-k="eng"><div class="box">✓</div><div><div class="txt">英语 2 篇阅读</div><div class="sub">三天一套卷子的客观题</div></div></div>
-      <div class="item" data-k="pol"><div class="box">✓</div><div><div class="txt">政治 20–30 题</div><div class="sub">碎片刷，错题标红</div></div></div>
+      <div class="item" data-k="pol"><div class="box">✓</div><div><div class="txt">政治 30 题</div><div class="sub">碎片刷，错题标红</div></div></div>
+      <div class="item" data-k="roll"><div class="box">✓</div><div><div class="txt">滚动复习 10 题</div><div class="sub">线代 / 积分 / 导数极限 · 12:30–12:50</div></div></div>
     </div>
 
     <div class="card">
@@ -437,7 +438,7 @@ html[data-theme="dark"] nav button.on{color:#a9c6e8}
 
 var KEY='kaoyan_sop_v2', OLDKEY='kaoyan_sop_v1', EXAM='2026-12-19', TERM_END='2026-11-13';
 var FLOOR=['word','bm','other'];
-var FULL=['word','bm','other','prob','math','eng','pol'];
+var FULL=['word','bm','other','prob','math','eng','pol','roll'];
 var PROB_CHIPS=['随机事件','一维','二维','数字特征','统计','已完成'];
 var SIG_CHIPS=['6.11','6.12','第7章','8.1','8.2','8.3','8.4','8.5','8.6','8.7','8.8','8.9','8.10','9.1','9.2','9.3','9.4','9.5','9.6','9.7','9.8','9.9','真题'];
 var POL_CHIPS=['马原选择','马原·辩证法','马原·认识论','错因归类','多选二刷','肖8','肖4','时政','大题背诵'];
@@ -471,8 +472,9 @@ var ROUND_CHIPS=['一轮','二轮','模拟'];
 var ENG_CHIPS=['阅读1-2','阅读3-4','新题型','完型','翻译','作文','整卷'];
 var GOAL_CHIPS=['概率收口','三重线面','保命班追平','政治一刷','信号第9章','英语作文','不崩'];
 var GATES=[
-  {d:'2026-10-31',n:'闸门5',t:'三重线面 + 政治选择一刷（见第十五节）'},
-  {d:'2026-11-13',n:'结课检验',t:'补漏收口，4 问自测'},
+  {d:'2026-11-08',n:'闸门A',t:'三重线面完？第9章完？第1套真题？'},
+  {d:'2026-11-13',n:'闸门B·结课检验',t:'保命班Day56？线面完？第9章完？'},
+  {d:'2026-11-28',n:'闸门C',t:'概率收完（Day71）？真题一轮≥18套？'},
   {d:'2026-12-01',n:'切换点',t:'无条件切真题套卷 + 模拟'}
 ];
 
@@ -674,15 +676,11 @@ function wordOn(key){
 
 /* ---------- 头部 ---------- */
 function phaseOf(key){
-  if(key<='2026-10-24') return 0;
-  if(key<='2026-10-25') return 1;
-  if(key<='2026-11-13') return 2;
-  return 3;
+  if(key<='2026-11-13') return 0;
+  return 1;
 }
 var PHASES=[
-  {n:'点火周（压缩）',t:'10/22–10/24',i:'6h/天'},
-  {n:'加速',t:'10/25',i:'8h/天'},
-  {n:'高强期（有课）',t:'10/26–11/13',i:'有课日 6–7h / 空日 9–10h'},
+  {n:'高强期（有课）',t:'10/31–11/13',i:'有课日 6–7h / 空日 9–10h'},
   {n:'无课冲刺',t:'11/14–12/18',i:'9–10h/天'}
 ];
 function renderHead(){
